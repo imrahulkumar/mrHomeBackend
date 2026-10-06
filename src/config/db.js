@@ -11,10 +11,25 @@ function ensureUsableDns() {
   }
 }
 
-export async function connectDB() {
-  mongoose.set('strictQuery', true);
-  if (env.mongoUri.startsWith('mongodb+srv://')) ensureUsableDns();
-  const conn = await mongoose.connect(env.mongoUri);
-  console.log(`MongoDB connected: ${conn.connection.host}/${conn.connection.name}`);
-  return conn;
+let connecting = null;
+
+// Safe to call on every request: on serverless hosts (Vercel) server.js never runs, so the
+// app connects lazily and reuses the connection across warm invocations.
+export function connectDB() {
+  if (mongoose.connection.readyState === 1) return Promise.resolve(mongoose);
+  if (!connecting) {
+    mongoose.set('strictQuery', true);
+    if (env.mongoUri.startsWith('mongodb+srv://')) ensureUsableDns();
+    connecting = mongoose
+      .connect(env.mongoUri, { serverSelectionTimeoutMS: 10000 })
+      .then((conn) => {
+        console.log(`MongoDB connected: ${conn.connection.host}/${conn.connection.name}`);
+        return conn;
+      })
+      .catch((err) => {
+        connecting = null; // allow the next request to retry
+        throw err;
+      });
+  }
+  return connecting;
 }

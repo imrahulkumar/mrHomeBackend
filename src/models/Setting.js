@@ -3,6 +3,19 @@ import mongoose from 'mongoose';
 // Storefront themes. Each id has a matching [data-theme] block in the store's index.css.
 export const THEME_PRESETS = ['classic', 'midnight', 'minimal', 'rose', 'emerald', 'festive'];
 
+// Font ids the admin can pick; 'theme' keeps the preset's font. Must match FONTS in both frontends' utils/fonts.js.
+export const FONT_IDS = [
+  'theme', 'playfair', 'cormorant', 'marcellus', 'cinzel', 'lora', 'dm-serif',
+  'inter', 'poppins', 'montserrat', 'lato', 'dm-sans', 'nunito', 'jost',
+];
+
+// Home page blocks, in their default order.
+export const HOME_SECTIONS = ['hero', 'categories', 'featured', 'videos'];
+const DEFAULT_SECTION_TITLES = { hero: '', categories: 'Shop by category', featured: 'Featured', videos: 'Watch our collection' };
+const defaultHomeSections = () => HOME_SECTIONS.map((id) => ({ id, enabled: true, title: DEFAULT_SECTION_TITLES[id] }));
+
+const choice = (values, value) => ({ type: String, enum: values, default: value });
+
 // An image that can come from a pasted URL or an upload. Both are kept so switching back loses nothing;
 // `source` decides which one the store renders.
 const media = () => ({
@@ -26,6 +39,47 @@ const settingSchema = new mongoose.Schema(
       imageMedia: media(),
       ctaText: { type: String, trim: true, default: 'Shop now' },
       ctaLink: { type: String, trim: true, default: '' },
+      align: choice(['left', 'center'], 'left'),
+      height: choice(['small', 'medium', 'large'], 'medium'),
+    },
+
+    // Order and visibility of the home page blocks; every id in HOME_SECTIONS appears exactly once.
+    homeSections: {
+      type: [
+        {
+          _id: false,
+          id: { type: String, enum: HOME_SECTIONS, required: true },
+          enabled: { type: Boolean, default: true },
+          title: { type: String, trim: true, default: '' },
+        },
+      ],
+      default: defaultHomeSections,
+    },
+
+    // Typography, buttons, cards and the product grid. 'theme' means "use the preset's value".
+    appearance: {
+      headingFont: choice(FONT_IDS, 'theme'),
+      bodyFont: choice(FONT_IDS, 'theme'),
+      fontSize: choice(['small', 'medium', 'large'], 'medium'),
+      buttonShape: choice(['theme', 'square', 'rounded', 'pill'], 'theme'),
+      cardStyle: choice(['theme', 'bordered', 'shadow', 'flat'], 'theme'),
+      productColumns: { type: Number, enum: [0, 2, 3, 4, 5], default: 0 }, // 0 = fit as many as the screen allows
+    },
+
+    header: {
+      style: choice(['classic', 'centered', 'compact'], 'classic'),
+      sticky: { type: Boolean, default: true },
+      menuStyle: choice(['underline', 'pills', 'boxed', 'plain'], 'underline'),
+      menuAlign: choice(['left', 'center'], 'left'),
+      menuUppercase: { type: Boolean, default: false },
+      showCategoryIcons: { type: Boolean, default: true },
+    },
+
+    animation: {
+      pageTransition: choice(['none', 'fade', 'slide', 'zoom'], 'fade'),
+      scrollReveal: { type: Boolean, default: true },
+      cardHover: choice(['none', 'lift', 'zoom', 'glow'], 'lift'),
+      speed: choice(['fast', 'normal', 'slow'], 'normal'),
     },
 
     theme: {
@@ -71,6 +125,14 @@ settingSchema.pre('validate', function resolveMedia() {
   if (this.isModified('logoMedia') || this.logoMedia.url || this.logoMedia.upload) this.logo = resolve(this.logoMedia);
   const hm = this.hero.imageMedia;
   if (this.isModified('hero.imageMedia') || hm.url || hm.upload) this.hero.image = resolve(hm);
+});
+
+// Keep homeSections a complete, duplicate-free ordering: drop repeats, append any missing block.
+settingSchema.pre('validate', function normalizeHomeSections() {
+  const seen = new Set();
+  const sections = (this.homeSections ?? []).filter((s) => s?.id && !seen.has(s.id) && seen.add(s.id));
+  const missing = defaultHomeSections().filter((s) => !seen.has(s.id));
+  if (missing.length || sections.length !== this.homeSections.length) this.homeSections = [...sections, ...missing];
 });
 
 settingSchema.statics.getSingleton = async function getSingleton() {

@@ -4,6 +4,7 @@ import { pick } from '../utils/helpers.js';
 const FIELDS = [
   'siteName', 'logo', 'logoMedia','announcement', 'hero', 'theme', 'currency', 'gstRate', 'shippingFee',
   'freeShippingThreshold', 'paymentMethods', 'contact', 'social', 'footerText',
+  'homeSections', 'appearance', 'header', 'animation',
 ];
 
 export async function getSettings(_req, res) {

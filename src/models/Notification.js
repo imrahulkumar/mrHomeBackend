@@ -13,6 +13,7 @@ const notificationSchema = new mongoose.Schema(
     audience: { type: String, enum: AUDIENCES, default: 'all' },
     recipients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     expiresAt: { type: Date, default: null },
+    schedule: { type: mongoose.Schema.Types.ObjectId, ref: 'NotificationSchedule', default: null }, // set when sent automatically
     isActive: { type: Boolean, default: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
@@ -28,5 +29,6 @@ notificationSchema.pre('validate', function checkRecipients() {
 
 notificationSchema.index({ isActive: 1, audience: 1, createdAt: -1 });
 notificationSchema.index({ recipients: 1 });
+notificationSchema.index({ schedule: 1 });
 
 export default mongoose.model('Notification', notificationSchema);

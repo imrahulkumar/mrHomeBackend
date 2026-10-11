@@ -24,6 +24,7 @@ export const env = {
   mongoUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  cronSecret: process.env.CRON_SECRET || '',
   // Browsers send Origin without a trailing slash, so strip any from configured URLs.
   clientUrls: [...new Set([...defaultClientUrls, ...extraClientUrls].map((u) => u.trim().replace(/\/+$/, '')).filter(Boolean))],
   publicUrl: (process.env.PUBLIC_URL || `http://localhost:${port}`).replace(/\/$/, ''),

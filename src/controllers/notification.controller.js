@@ -1,5 +1,6 @@
 import Notification from '../models/Notification.js';
 import NotificationRead from '../models/NotificationRead.js';
+import { dispatchQuietly } from '../services/notificationDispatch.service.js';
 import { ApiError } from '../utils/ApiError.js';
 import { isObjectId, pick, toList } from '../utils/helpers.js';
 
@@ -37,6 +38,7 @@ function feedFilter(req) {
 
 /** GET /api/notifications/feed — the current visitor's notifications, newest first, each with `read`. */
 export async function getFeed(req, res) {
+  await dispatchQuietly();
   const viewer = viewerOf(req);
   const items = await Notification.find(feedFilter(req))
     .select('title message image product link createdAt')
@@ -78,10 +80,12 @@ export async function listNotifications(req, res) {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(100, Number(req.query.limit) || 20);
 
+  await dispatchQuietly();
   const [items, total] = await Promise.all([
     Notification.find()
       .populate('product', 'name slug')
       .populate('recipients', 'name email')
+      .populate('schedule', 'title')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)

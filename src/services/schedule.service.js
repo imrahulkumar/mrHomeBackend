@@ -55,8 +55,19 @@ function runsOn(schedule, date) {
   }
 }
 
+// Short fixed intervals, meant for testing. They count from startDate + time.
+export const INTERVAL_MS = { every15s: 15_000, everyMinute: 60_000 };
+
 /** First time the schedule fires strictly after `after`, or null if it never fires again. */
 export function nextRun(schedule, after = new Date()) {
+  const step = INTERVAL_MS[schedule.repeat];
+  if (step) {
+    const start = zonedTime(schedule.startDate, schedule.time, schedule.timezone).getTime();
+    const n = after.getTime() < start ? 0 : Math.floor((after.getTime() - start) / step) + 1;
+    const at = new Date(start + n * step);
+    return schedule.endDate && localDate(at, schedule.timezone) > schedule.endDate ? null : at;
+  }
+
   const today = localDate(after, schedule.timezone);
   const from = schedule.startDate > today ? schedule.startDate : addDays(today, -1); // -1: zone edge cases
   for (let i = 0; i < 370; i++) {

@@ -4,7 +4,7 @@ import { pick } from '../utils/helpers.js';
 import { nextRun } from './schedule.service.js';
 
 const CONTENT = ['title', 'message', 'image', 'product', 'link', 'audience', 'recipients'];
-const MIN_CHECK_INTERVAL_MS = 15_000;
+const MIN_CHECK_INTERVAL_MS = 5_000; // short enough for the 15-second test schedules
 let lastCheck = 0;
 
 /** Sends one notification from a schedule's template. `at` becomes its sent time. */

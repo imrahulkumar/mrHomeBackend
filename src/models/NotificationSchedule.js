@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { isValidTimeZone, nextRun } from '../services/schedule.service.js';
 import { AUDIENCES } from './Notification.js';
 
-export const REPEATS = ['once', 'daily', 'alternate', 'weekly'];
+export const REPEATS = ['once', 'daily', 'alternate', 'weekly', 'everyMinute', 'every15s']; // last two are for testing
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const TIMING_FIELDS = ['repeat', 'weekdays', 'time', 'timezone', 'startDate', 'endDate', 'isActive'];
@@ -19,7 +19,8 @@ const scheduleSchema = new mongoose.Schema(
     audience: { type: String, enum: AUDIENCES, default: 'all' },
     recipients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
-    // When: once / every day / every other day (counted from startDate) / weekly on `weekdays`.
+    // When: once / every day / every other day (counted from startDate) / weekly on `weekdays`
+    // / every minute or every 15 seconds from startDate + time (testing).
     repeat: { type: String, enum: REPEATS, default: 'daily' },
     weekdays: [{ type: Number, min: 0, max: 6 }], // 0 = Sunday
     time: { type: String, required: true, match: [TIME, 'Time must be HH:mm.'] },

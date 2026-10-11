@@ -3,7 +3,7 @@ import NotificationRead from '../models/NotificationRead.js';
 import { ApiError } from '../utils/ApiError.js';
 import { isObjectId, pick, toList } from '../utils/helpers.js';
 
-const FIELDS = ['title', 'message', 'image', 'product', 'link', 'audience', 'recipients', 'showAsPopup', 'expiresAt', 'isActive'];
+const FIELDS = ['title', 'message', 'image', 'product', 'link', 'audience', 'recipients', 'expiresAt', 'isActive'];
 const FEED_LIMIT = 30;
 const DEVICE_ID = /^[\w-]{8,64}$/;
 
@@ -39,7 +39,7 @@ function feedFilter(req) {
 export async function getFeed(req, res) {
   const viewer = viewerOf(req);
   const items = await Notification.find(feedFilter(req))
-    .select('title message image product link showAsPopup createdAt')
+    .select('title message image product link createdAt')
     .populate('product', 'name slug')
     .sort({ createdAt: -1 })
     .limit(FEED_LIMIT)

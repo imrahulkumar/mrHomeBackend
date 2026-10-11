@@ -12,7 +12,6 @@ const notificationSchema = new mongoose.Schema(
     // all = everyone · registered = logged-in customers · guests = visitors without an account · users = only `recipients`
     audience: { type: String, enum: AUDIENCES, default: 'all' },
     recipients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    showAsPopup: { type: Boolean, default: false }, // also pop up once on the store, not just in the bell
     expiresAt: { type: Date, default: null },
     isActive: { type: Boolean, default: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },

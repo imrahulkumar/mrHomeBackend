@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { safeUrl } from '../utils/helpers.js';
 import { isValidTimeZone, nextRun } from '../services/schedule.service.js';
 import { AUDIENCES } from './Notification.js';
 
@@ -13,9 +14,9 @@ const scheduleSchema = new mongoose.Schema(
     // What gets sent: same fields as a Notification.
     title: { type: String, required: [true, 'Title is required.'], trim: true, maxlength: 120 },
     message: { type: String, required: [true, 'Message is required.'], trim: true, maxlength: 1000 },
-    image: { type: String, trim: true, default: '' },
+    image: { type: String, trim: true, default: '', validate: safeUrl },
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: null },
-    link: { type: String, trim: true, default: '' },
+    link: { type: String, trim: true, default: '', validate: safeUrl },
     audience: { type: String, enum: AUDIENCES, default: 'all' },
     recipients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 

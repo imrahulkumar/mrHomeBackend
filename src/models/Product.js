@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { safeUrl } from '../utils/helpers.js';
 
 const productSchema = new mongoose.Schema(
   {
@@ -10,7 +11,7 @@ const productSchema = new mongoose.Schema(
     material: { type: String, trim: true, default: '' },
     price: { type: Number, required: [true, 'Price is required.'], min: [0, 'Price cannot be negative.'] },
     mrp: { type: Number, min: 0, default: null }, // original price, shown struck-through when higher than price
-    images: [{ type: String, trim: true }],
+    images: [{ type: String, trim: true, validate: safeUrl }],
     stock: { type: Number, min: 0, default: 10 },
     rating: { type: Number, min: 0, max: 5, default: 0 },
     tags: [{ type: String, trim: true, lowercase: true }],

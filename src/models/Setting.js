@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { hexColor, safeUrl } from '../utils/helpers.js';
 
 // Storefront themes. Each id has a matching [data-theme] block in the store's index.css.
 export const THEME_PRESETS = ['classic', 'midnight', 'minimal', 'rose', 'emerald', 'festive'];
@@ -20,25 +21,25 @@ const choice = (values, value) => ({ type: String, enum: values, default: value 
 // `source` decides which one the store renders.
 const media = () => ({
   source: { type: String, enum: ['url', 'upload'], default: 'url' },
-  url: { type: String, trim: true, default: '' },
-  upload: { type: String, trim: true, default: '' },
+  url: { type: String, trim: true, default: '', validate: safeUrl },
+  upload: { type: String, trim: true, default: '', validate: safeUrl },
 });
 
 // Single document that drives the look and content of the storefront.
 const settingSchema = new mongoose.Schema(
   {
     siteName: { type: String, trim: true, default: 'Mamta Jewellers' },
-    logo: { type: String, trim: true, default: '' }, // resolved from logoMedia on save; what the store renders
+    logo: { type: String, trim: true, default: '', validate: safeUrl }, // resolved from logoMedia on save; what the store renders
     logoMedia: media(),
     announcement: { type: String, trim: true, default: '' }, // thin bar above the navbar; empty hides it
 
     hero: {
       title: { type: String, trim: true, default: 'Timeless jewellery & handcrafted décor' },
       subtitle: { type: String, trim: true, default: 'Certified gold, diamonds and artisan home pieces.' },
-      image: { type: String, trim: true, default: '' }, // resolved from hero.imageMedia on save
+      image: { type: String, trim: true, default: '', validate: safeUrl }, // resolved from hero.imageMedia on save
       imageMedia: media(),
       ctaText: { type: String, trim: true, default: 'Shop now' },
-      ctaLink: { type: String, trim: true, default: '' },
+      ctaLink: { type: String, trim: true, default: '', validate: safeUrl },
       align: choice(['left', 'center'], 'left'),
       height: choice(['small', 'medium', 'large'], 'medium'),
     },
@@ -87,8 +88,8 @@ const settingSchema = new mongoose.Schema(
       // true keeps primaryColor/primaryDark (and colours chosen before presets existed);
       // the admin turns it off when a preset is picked so the preset's own accent shows.
       customColors: { type: Boolean, default: true },
-      primaryColor: { type: String, trim: true, default: '#b8892f' },
-      primaryDark: { type: String, trim: true, default: '#8f6a1f' },
+      primaryColor: { type: String, trim: true, default: '#b8892f', validate: hexColor },
+      primaryDark: { type: String, trim: true, default: '#8f6a1f', validate: hexColor },
     },
 
     // Checkout pricing
@@ -110,9 +111,9 @@ const settingSchema = new mongoose.Schema(
       address: { type: String, trim: true, default: '' },
     },
     social: {
-      instagram: { type: String, trim: true, default: '' },
-      facebook: { type: String, trim: true, default: '' },
-      youtube: { type: String, trim: true, default: '' },
+      instagram: { type: String, trim: true, default: '', validate: safeUrl },
+      facebook: { type: String, trim: true, default: '', validate: safeUrl },
+      youtube: { type: String, trim: true, default: '', validate: safeUrl },
     },
     footerText: { type: String, trim: true, default: 'BIS Hallmarked Gold' },
   },

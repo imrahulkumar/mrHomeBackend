@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { safeUrl } from '../utils/helpers.js';
 
 export const AUDIENCES = ['all', 'registered', 'guests', 'users'];
 
@@ -6,9 +7,9 @@ const notificationSchema = new mongoose.Schema(
   {
     title: { type: String, required: [true, 'Title is required.'], trim: true, maxlength: 120 },
     message: { type: String, required: [true, 'Message is required.'], trim: true, maxlength: 1000 },
-    image: { type: String, trim: true, default: '' },
+    image: { type: String, trim: true, default: '', validate: safeUrl },
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: null }, // "View" opens this product
-    link: { type: String, trim: true, default: '' }, // used when no product is set; a store path (/shop/rings) or full URL
+    link: { type: String, trim: true, default: '', validate: safeUrl }, // used when no product is set; a store path (/shop/rings) or full URL
     // all = everyone · registered = logged-in customers · guests = visitors without an account · users = only `recipients`
     audience: { type: String, enum: AUDIENCES, default: 'all' },
     recipients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

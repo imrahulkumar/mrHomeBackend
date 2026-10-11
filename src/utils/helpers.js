@@ -38,3 +38,14 @@ export function extractYouTubeId(url = '') {
   if (match) return match[1];
   return /^[\w-]{11}$/.test(url.trim()) ? url.trim() : null;
 }
+
+/**
+ * Mongoose validator for links and image URLs the admin enters: only http(s) or a same-site path,
+ * so a stolen admin login can't plant javascript:/data: links that run in customers' browsers.
+ */
+export const safeUrl = {
+  validator: (value) => !value || /^(https?:\/\/[^\s]+|\/(?!\/)[^\s]*)$/i.test(value),
+  message: (props) => `"${props.value}" is not an allowed link. Use a full https:// address or a path starting with /.`,
+};
+
+export const hexColor = { validator: (value) => !value || /^#[0-9a-f]{3,8}$/i.test(value), message: 'Colours must be hex codes like #b8892f.' };

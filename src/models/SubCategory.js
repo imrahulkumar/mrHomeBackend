@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { safeUrl } from '../utils/helpers.js';
 
 // Second-level category used as a filter inside a Category (e.g. Rings inside Jewellery).
 const subCategorySchema = new mongoose.Schema(
@@ -7,7 +8,7 @@ const subCategorySchema = new mongoose.Schema(
     slug: { type: String, required: true, lowercase: true, trim: true },
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: [true, 'Parent category is required.'] },
     icon: { type: String, trim: true, default: '' },
-    image: { type: String, trim: true, default: '' },
+    image: { type: String, trim: true, default: '', validate: safeUrl },
     order: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
   },

@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
-import { extractYouTubeId } from '../utils/helpers.js';
+import { extractYouTubeId, safeUrl } from '../utils/helpers.js';
 
 const videoSchema = new mongoose.Schema(
   {
     title: { type: String, required: [true, 'Video title is required.'], trim: true, maxlength: 150 },
-    youtubeUrl: { type: String, required: [true, 'YouTube link is required.'], trim: true },
+    youtubeUrl: { type: String, required: [true, 'YouTube link is required.'], trim: true, validate: safeUrl },
     videoId: { type: String },
     description: { type: String, trim: true, default: '' },
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: null }, // show on this product's page

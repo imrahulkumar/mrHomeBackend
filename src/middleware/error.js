@@ -22,8 +22,15 @@ export function errorHandler(err, req, res, _next) {
     message = `${Object.keys(err.keyValue ?? {}).join(', ') || 'Value'} already exists.`;
   } else if (err instanceof multer.MulterError) {
     status = 400;
+  } else if (err.type === 'entity.parse.failed' || err.type === 'entity.too.large') {
+    status = err.status; // malformed / oversized JSON body
+    message = err.type === 'entity.too.large' ? 'Request is too large.' : 'Invalid JSON body.';
   }
 
-  if (status >= 500) console.error(err);
-  res.status(status).json({ message, ...(env.nodeEnv === 'development' && status >= 500 && { stack: err.stack }) });
+  const isDev = env.nodeEnv === 'development';
+  if (status >= 500) {
+    console.error(err);
+    if (!isDev) message = 'Something went wrong. Please try again.'; // never leak internals in production
+  }
+  res.status(status).json({ message, ...(isDev && status >= 500 && { stack: err.stack }) });
 }

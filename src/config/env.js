@@ -24,6 +24,8 @@ export const env = {
   mongoUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  // Admin sessions are worth more to an attacker, so they expire sooner.
+  adminJwtExpiresIn: process.env.ADMIN_JWT_EXPIRES_IN || '12h',
   cronSecret: process.env.CRON_SECRET || '',
   // Browsers send Origin without a trailing slash, so strip any from configured URLs.
   clientUrls: [...new Set([...defaultClientUrls, ...extraClientUrls].map((u) => u.trim().replace(/\/+$/, '')).filter(Boolean))],
@@ -34,3 +36,11 @@ export const env = {
     password: process.env.ADMIN_PASSWORD,
   },
 };
+
+// Loud warnings for settings that make the API easy to break into.
+if (env.jwtSecret.length < 32) {
+  console.warn('SECURITY WARNING: JWT_SECRET is shorter than 32 characters; anyone who guesses it can forge admin logins. Generate one with: node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"');
+}
+if (env.admin.password === 'Admin@123') {
+  console.warn('SECURITY WARNING: ADMIN_PASSWORD is still the example value "Admin@123". Change the admin password.');
+}

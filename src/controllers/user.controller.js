@@ -23,20 +23,22 @@ export async function listUsers(req, res) {
 /** POST /api/users (admin) — e.g. to add another admin */
 export async function createUser(req, res) {
   const { name, email, password, phone, role } = req.body;
-  if (await User.exists({ email: String(email ?? '').toLowerCase() })) throw ApiError.conflict('An account with this email already exists.');
+  if (typeof email !== 'string' || typeof password !== 'string') throw ApiError.badRequest('Email and password are required.');
+  if (await User.exists({ email: email.toLowerCase().trim() })) throw ApiError.conflict('An account with this email already exists.');
   const user = await User.create({ name, email, password, phone, role });
   res.status(201).json(user.toPublic());
 }
 
 /** PATCH /api/users/:id (admin) — change role or enable/disable */
 export async function updateUser(req, res) {
-  if (String(req.params.id) === String(req.user._id) && (req.body.role === 'user' || req.body.isActive === false)) {
+  const demotesSelf = (req.body.role !== undefined && req.body.role !== 'admin') || (req.body.isActive !== undefined && req.body.isActive !== true);
+  if (String(req.params.id) === String(req.user._id) && demotesSelf) {
     throw ApiError.badRequest('You cannot remove your own admin access or disable your own account.');
   }
   const user = await User.findById(req.params.id);
   if (!user) throw ApiError.notFound('User not found.');
   if (req.body.role !== undefined) user.role = req.body.role;
-  if (req.body.isActive !== undefined) user.isActive = req.body.isActive;
+  if (req.body.isActive !== undefined) user.isActive = req.body.isActive === true; // only a real boolean enables
   if (req.body.name !== undefined) user.name = req.body.name;
   if (req.body.phone !== undefined) user.phone = req.body.phone;
   await user.save();

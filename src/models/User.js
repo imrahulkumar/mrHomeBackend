@@ -12,16 +12,26 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email.'],
     },
-    phone: { type: String, trim: true },
-    password: { type: String, required: true, minlength: [6, 'Password must be at least 6 characters.'], select: false },
+    phone: { type: String, trim: true, maxlength: 20 },
+    // Length is checked on the plain text (validation runs before the hashing hook); bcrypt only reads 72 bytes.
+    password: {
+      type: String,
+      required: true,
+      minlength: [8, 'Password must be at least 8 characters.'],
+      maxlength: [72, 'Password must be at most 72 characters.'],
+      select: false,
+    },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     isActive: { type: Boolean, default: true },
+    tokenVersion: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
 
 userSchema.pre('save', async function hashPassword() {
   if (this.isModified('password')) this.password = await bcrypt.hash(this.password, 12);
+  // Changing password, role or active state invalidates every token issued before.
+  if (!this.isNew && this.isModified('password role isActive')) this.tokenVersion = (this.tokenVersion ?? 0) + 1;
 });
 
 userSchema.methods.matchPassword = function matchPassword(plain) {

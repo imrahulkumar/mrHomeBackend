@@ -3,7 +3,12 @@ import { env } from '../config/env.js';
 import User from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 
-export const signToken = (user) => jwt.sign({ id: user._id, role: user.role }, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
+// `v` is the user's tokenVersion: bumping it (password change, role change, disable) logs out every old token.
+export const signToken = (user) =>
+  jwt.sign({ id: user._id, role: user.role, v: user.tokenVersion ?? 0 }, env.jwtSecret, {
+    algorithm: 'HS256',
+    expiresIn: user.role === 'admin' ? env.adminJwtExpiresIn : env.jwtExpiresIn,
+  });
 
 /**
  * Runs on every request: if a valid Bearer token is present, loads the user into req.user.
@@ -13,9 +18,9 @@ export async function attachUser(req, _res, next) {
   const header = req.headers.authorization ?? '';
   if (!header.startsWith('Bearer ')) return next();
   try {
-    const { id } = jwt.verify(header.slice(7), env.jwtSecret);
+    const { id, v = 0 } = jwt.verify(header.slice(7), env.jwtSecret, { algorithms: ['HS256'] });
     const user = await User.findById(id).lean();
-    if (user?.isActive) req.user = user;
+    if (user?.isActive && (user.tokenVersion ?? 0) === v) req.user = user;
   } catch {
     // invalid / expired token: treat as anonymous
   }

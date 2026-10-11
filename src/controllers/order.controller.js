@@ -5,7 +5,11 @@ import Setting from '../models/Setting.js';
 import { chargePayment } from '../services/payment.service.js';
 import { ApiError } from '../utils/ApiError.js';
 
-const newOrderNumber = () => `ORD-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+const ADDRESS_FIELDS = ['fullName', 'phone', 'line1', 'city', 'state', 'pincode'];
+const MAX_ITEMS = 50;
+const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded'];
+
+const newOrderNumber =() => `ORD-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
 
 /**
  * POST /api/orders
@@ -15,8 +19,11 @@ const newOrderNumber = () => `ORD-${Date.now().toString(36).toUpperCase()}-${cry
 export async function createOrder(req, res) {
   const { items = [], address = {}, payment = {} } = req.body;
   if (!Array.isArray(items) || items.length === 0) throw ApiError.badRequest('Your cart is empty.');
-  const missing = ['fullName', 'phone', 'line1', 'city', 'state', 'pincode'].filter((k) => !String(address[k] ?? '').trim());
+  if (items.length > MAX_ITEMS) throw ApiError.badRequest(`An order can have at most ${MAX_ITEMS} different items.`);
+  if (!address || typeof address !== 'object') throw ApiError.badRequest('Please fill in your shipping address.');
+  const missing = ADDRESS_FIELDS.filter((k) => typeof address[k] !== 'string' || !address[k].trim());
   if (missing.length) throw ApiError.badRequest(`Please fill in your shipping address (${missing.join(', ')}).`);
+  const shippingAddress = Object.fromEntries(ADDRESS_FIELDS.map((k) => [k, address[k]])); // drop any extra keys
 
   const settings = await Setting.getSingleton();
   if (!PAYMENT_METHODS.includes(payment.method) || !settings.paymentMethods?.[payment.method]) {
@@ -31,7 +38,7 @@ export async function createOrder(req, res) {
     const p = byId.get(String(id));
     const quantity = Math.floor(Number(qty));
     if (!p) throw ApiError.badRequest('One of the items in your cart is no longer available.');
-    if (!(quantity >= 1)) throw ApiError.badRequest(`Invalid quantity for ${p.name}.`);
+    if (!(quantity >= 1 && quantity <= 1000)) throw ApiError.badRequest(`Invalid quantity for ${p.name}.`);
     if (p.stock < quantity) throw ApiError.badRequest(`Only ${p.stock} left in stock for ${p.name}.`);
     return { product: p._id, name: p.name, image: p.images?.[0] ?? '', price: p.price, qty: quantity };
   });
@@ -65,7 +72,7 @@ export async function createOrder(req, res) {
     orderNumber: newOrderNumber(),
     user: req.user._id,
     items: orderItems,
-    address,
+    address: shippingAddress,
     subtotal,
     gst,
     shipping,
@@ -124,6 +131,7 @@ export async function updateOrderStatus(req, res) {
     order.status = status;
   }
   if (paymentStatus) {
+    if (!PAYMENT_STATUSES.includes(paymentStatus)) throw ApiError.badRequest('Invalid payment status.');
     order.payment.status = paymentStatus;
     if (paymentStatus === 'paid' && !order.payment.paidAt) order.payment.paidAt = new Date();
   }

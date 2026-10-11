@@ -2,7 +2,7 @@ import Setting from '../models/Setting.js';
 import { pick } from '../utils/helpers.js';
 
 const FIELDS = [
-  'siteName', 'logo', 'announcement', 'hero', 'theme', 'currency', 'gstRate', 'shippingFee',
+  'siteName', 'logo', 'logoMedia','announcement', 'hero', 'theme', 'currency', 'gstRate', 'shippingFee',
   'freeShippingThreshold', 'paymentMethods', 'contact', 'social', 'footerText',
 ];
 

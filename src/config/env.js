@@ -20,7 +20,8 @@ const extraClientUrls = (process.env.CLIENT_URLS || '').split(',');
 
 export const env = {
   port,
-  nodeEnv: process.env.NODE_ENV || 'development',
+  // On Vercel default to production so a missing NODE_ENV never exposes stack traces.
+  nodeEnv: process.env.NODE_ENV || (process.env.VERCEL ? 'production' : 'development'),
   mongoUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
